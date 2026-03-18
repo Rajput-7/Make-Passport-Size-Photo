@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passport Pro Studio - Liquid Glass Edition</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --reset: #ef4444;
+            --font: 'Inter', system-ui, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            margin: 0; padding: 40px 20px;
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh;
+            /* Background Smooth Transition */
+            transition: background-image 2s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        /* Glass Overlay for the whole body to give depth */
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.2); /* Darken backgrounds slightly */
+            z-index: -1;
+        }
+
+        /* The Main Liquid Glass Container */
+        .glass-container {
+            width: 100%; max-width: 1100px;
+            /* Water-like transparency */
+            /*background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1)); */
+            border-radius: 30px;
+            backdrop-filter: blur(10px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%);
+            
+            /* Realistic Glass Border */
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.4),
+                inset 0 0 20px rgba(255, 255, 255, 0.2),
+                inset 0 0 2px 1px rgba(255, 255, 255, 0.4);
+            
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* Animated Water Reflection */
+        .glass-container::after {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            animation: rotateReflection 15s linear infinite;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes rotateReflection {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        header { border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 30px; padding-bottom: 15px; }
+        h1 { margin:0; font-size: 2.2rem; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        p { color: rgba(255,255,255,0.9); font-weight: 500; }
+        
+        .main-layout { display: none; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-top: 20px; }
+        .main-layout.active { display: grid; }
+
+        @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } }
+
+        /* Inner Content Boxes */
+        .editor-box, .preview-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .upload-section {
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            padding: 60px; border-radius: 20px; text-align: center;
+            background: rgba(255,255,255,0.1); transition: 0.3s;
+            cursor: pointer;
+        }
+        .upload-section:hover { background: rgba(255,255,255,0.2); border-color: #fff; }
+
+        .crop-area {
+            width: 100%; height: 500px;
+            background: rgba(0,0,0,0.2); border-radius: 15px;
+            overflow: hidden; position: relative;
+        }
+
+        #previewCanvas {
+            background: white; border: 4px solid white;
+            border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 200px; margin-bottom: 20px;
+        }
+
+        .settings-grid {
+            display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%;
+            background: rgba(0,0,0,0.1); padding: 15px; border-radius: 15px;
+        }
+
+        .btn {
+            padding: 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px;
+            font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 14px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-primary { background: var(--primary); color: white; width: 100%; margin-top: 15px; }
+        .btn-success { background: var(--success); color: white; width: 100%; }
+        .btn-reset { background: var(--reset); color: white; flex: 1; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+
+        select, input[type="color"] {
+            width: 100%; padding: 10px; border-radius: 8px; border: none; background: rgba(255,255,255,0.9);
+        }
+        label { font-weight: 600; font-size: 13px; margin-bottom: 5px; display: block; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="glass-container">
+    <header>
+        <h1>Passport Pro Studio ??</h1>
+        <p>Upload, Crop and Download A4 Sheets instantly.</p>
+    </header>
+
+    <div class="upload-section" id="uploadSection" onclick="document.getElementById('imageInput').click()">
+        <strong style="font-size: 1.4rem; color: #fff;">Step 1: Click to Select Image</strong><br><br>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <span style="color: white; opacity: 0.8;">Selected images will be processed locally.</span>
+    </div>
+
+    <div class="main-layout" id="mainLayout">
+        <div class="editor-box">
+            <h3 style="margin-top:0; color: white;">2. Adjust & Crop</h3>
+            <div class="crop-area">
+                <img id="imageToCrop" style="max-width: 100%;">
+            </div>
+            <button class="btn btn-primary" id="applyCrop">Apply Crop & Preview</button>
+        </div>
+
+        <div class="preview-section">
+            <h3 style="margin-top:0; color: white;">3. Preview</h3>
+            <canvas id="previewCanvas"></canvas>
+            
+            <div class="settings-grid">
+                <div>
+                    <label>Background Color:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+                <div>
+                    <label>Photos per Sheet:</label>
+                    <select id="photoCount">
+                        <option value="6">6 Photos (1 Row)</option>
+                        <option value="12">12 Photos (2 Rows)</option>
+                        <option value="30" selected>30 Photos (Full A4)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; width:100%; margin-top:20px;">
+                <button class="btn btn-reset" onclick="location.reload()">Reset</button>
+                <button class="btn btn-success" id="downloadBtn" style="flex: 2;">Download PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Wallpaper Logic (Source: Your provided code)
+    const wallpapers = ['image_1.jpg', 'image_2.jpg'];
+    let bgIdx = 0;
+    function rotateBg() {
+        document.body.style.backgroundImage = `url(${wallpapers[bgIdx]})`;
+        bgIdx = (bgIdx + 1) % wallpapers.length;
+    }
+    rotateBg();
+    setInterval(rotateBg, 8000); // Change every 8 seconds
+
+    // 2. Image Processing Logic
+    const imageInput = document.getElementById('imageInput');
+    const uploadSection = document.getElementById('uploadSection');
+    const mainLayout = document.getElementById('mainLayout');
+    const imageToCrop = document.getElementById('imageToCrop');
+    const applyCrop = document.getElementById('applyCrop');
+    const previewCanvas = document.getElementById('previewCanvas');
+    const bgColorInput = document.getElementById('bgColor');
+    const photoCountSelect = document.getElementById('photoCount');
+    const downloadBtn = document.getElementById('downloadBtn');
+    
+    let cropper;
+    const ctx = previewCanvas.getContext('2d');
+    previewCanvas.width = 413; 
+    previewCanvas.height = 531;
+
+    imageInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            imageToCrop.src = url;
+            uploadSection.style.display = "none";
+            mainLayout.classList.add('active');
+            
+            if (cropper) cropper.destroy();
+            setTimeout(() => {
+                cropper = new Cropper(imageToCrop, {
+                    aspectRatio: 35 / 45,
+                    viewMode: 1,
+                    background: false
+                });
+            }, 100);
+        }
+    };
+
+    applyCrop.onclick = () => {
+        if (!cropper) return;
+        const croppedCanvas = cropper.getCroppedCanvas();
+        const borderPadding = 24; 
+        
+        ctx.fillStyle = bgColorInput.value;
+        ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        
+        ctx.drawImage(croppedCanvas, borderPadding, borderPadding, 
+                      previewCanvas.width - (borderPadding * 2), 
+                      previewCanvas.height - (borderPadding * 2));
+        
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, previewCanvas.width, previewCanvas.height);
+    };
+
+    downloadBtn.onclick = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const imgData = previewCanvas.toDataURL('image/jpeg', 1.0);
+        
+        const count = parseInt(photoCountSelect.value);
+        let x = 10, y = 10;
+        for (let i = 0; i < count; i++) {
+            doc.addImage(imgData, 'JPEG', x, y, 35, 45);
+            x += 38;
+            if (x > 180) { x = 10; y += 48; }
+        }
+        doc.save("passport_photos.pdf");
+    };
+</script>
+
+</body>
+</html>
